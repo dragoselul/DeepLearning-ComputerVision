@@ -1,2 +1,3 @@
 /hotdog_nothotdog
 /*.zip
+*.ipynb filter=nbstripout
