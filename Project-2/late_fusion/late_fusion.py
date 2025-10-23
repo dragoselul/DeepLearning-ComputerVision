@@ -110,11 +110,12 @@ os.makedirs(os.path.dirname(metrics_path_3d), exist_ok=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-root_dir = "/home/chiara/dtu/deep_learning/datasets/ucf101/ufc10"
+root_dir = "/home/dragoselul/git/DeepLearning-ComputerVision/Project-2/ufc10"
 
 
-batch_size = 4
-epochs = 10
+
+batch_size = 64
+epochs = 50
 num_classes = 10
 lr = 1e-3 
 
@@ -143,8 +144,8 @@ if __name__ == "__main__":
     resnet18 = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
     r3d_18 = r3d_18(weights=None)
     # Instantiate the Late Fusion Model
-    model = ThreeDLateFusion(backbone_3d=r3d_18, num_classes=num_classes, aggregation_mode='average')
-    #model = ResNetLateFusion(backbone=resnet18, num_classes=num_classes, aggregation_mode='average')
+    # model = ThreeDLateFusion(backbone_3d=r3d_18, num_classes=num_classes, aggregation_mode='average')
+    model = ResNetLateFusion(backbone=resnet18, num_classes=num_classes, aggregation_mode='average')
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss() 
@@ -154,6 +155,6 @@ if __name__ == "__main__":
     metrics_df = modelWrapper.train(save_path, epochs, train_loader, val_loader)
 
     #save to csv
-    metrics_path = metrics_path_3d
+    metrics_path = metrics_path_2d
     metrics_df.to_csv(metrics_path, index=False)
     print(f"Metrics saved to {metrics_path}")
