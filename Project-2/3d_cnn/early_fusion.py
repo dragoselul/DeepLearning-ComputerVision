@@ -13,10 +13,10 @@ import os
 #config 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 work_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-root_dir = f"{work_dir}\\ucf101\\ufc10".replace("\\", "/")
+root_dir = f"{work_dir}\\ucf10".replace("\\", "/")
 
 batch_size = 64
-epochs = 10
+epochs = 50
 num_classes = 10
 lr = 1e-3 
 save_path = f"{work_dir}\\models\\3d_early_fusion.pth".replace("\\", "/")
@@ -27,8 +27,6 @@ def train_one_epoch(model, loader, optimizer, criterion):
     model.train()
     running_loss, correct, total = 0.0, 0, 0
     for imgs, labels in tqdm(loader, desc="Train", leave=False):
-        imgs = torch.stack(imgs, dim=0) 
-        imgs = imgs.permute(1, 2, 0, 3, 4)
         imgs, labels = imgs.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs = model(imgs)
@@ -48,8 +46,6 @@ def evaluate(model, loader, criterion):
     model.eval() 
     running_loss, correct, total = 0.0, 0, 0
     for imgs, labels in tqdm(loader, desc="Val", leave=False):
-        imgs = torch.stack(imgs, dim=0) 
-        imgs = imgs.permute(1, 2, 0, 3, 4)
         imgs, labels = imgs.to(device), labels.to(device)
         outputs = model(imgs)
         loss = criterion(outputs, labels)
@@ -65,16 +61,18 @@ def evaluate(model, loader, criterion):
 class EarlyFusion3DCNN(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
-        self.conv1 = nn.Conv3d(3, 64, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv3d(64, 128, kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(128 * 4 * 4 * 4, 256)  # adjust after seeing real spatial size
+        # For 3D CNN, we keep channels=3 and use temporal dimension for frames
+        self.conv1 = nn.Conv3d(3, 64, kernel_size=(3,3,3), padding=1)
+        self.conv2 = nn.Conv3d(64, 128, kernel_size=(3,3,3), padding=1)
+        self.fc1 = nn.Linear(128 * 2 * 7 * 7, 256)
         self.fc2 = nn.Linear(256, num_classes)
 
-    def forward(self, x):  # x: [B, 3, D, H, W]
+    def forward(self, x):  # x: [B, 3, D, H, W] where D is num_frames
         x = F.relu(self.conv1(x))
-        x = F.max_pool3d(x, 2)
+        x = F.max_pool3d(x, (2, 2, 2))  # pool spatially and temporally
         x = F.relu(self.conv2(x))
-        x = F.adaptive_avg_pool3d(x, (4, 4, 4))
+        x = F.max_pool3d(x, (2, 2, 2))
+        x = F.adaptive_avg_pool3d(x, (2, 7, 7))
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         return self.fc2(x)
@@ -89,8 +87,8 @@ if __name__ == "__main__":
     ])
 
     #dataset, loaders
-    train_ds = FrameVideoDataset(root_dir=root_dir, split='train', transform=transform, stack_frames=False)
-    val_ds   = FrameVideoDataset(root_dir=root_dir, split='val', transform=transform, stack_frames=False)
+    train_ds = FrameVideoDataset(root_dir=root_dir, split='train', transform=transform, stack_frames=True)
+    val_ds   = FrameVideoDataset(root_dir=root_dir, split='val', transform=transform, stack_frames=True)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2)
     val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=2)
@@ -99,7 +97,7 @@ if __name__ == "__main__":
 
 
     #model 
-    model = EarlyFusion3DCNN()
+    model = EarlyFusion3DCNN(num_classes=num_classes)
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss() 

@@ -13,10 +13,10 @@ import os
 #config 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 work_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-root_dir = f"{work_dir}\\ucf101\\ufc10".replace("\\", "/")
+root_dir = f"{work_dir}\\ucf10".replace("\\", "/")
 
-batch_size = 64
-epochs = 10
+batch_size = 256
+epochs = 50
 num_classes = 10
 lr = 1e-3 
 save_path = f"{work_dir}\\models\\2d_early_fusion.pth".replace("\\", "/")
@@ -64,7 +64,7 @@ class EarlyFusion2DCNN(nn.Module):
     def __init__(self, num_classes=10, num_frames=10):
         super().__init__()
         in_channels = 3 * num_frames
-        self.conv1 = nn.Conv2d(30, 64, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.fc1 = nn.Linear(128 * 8 * 8, 256)
         self.fc2 = nn.Linear(256, num_classes)
@@ -74,6 +74,7 @@ class EarlyFusion2DCNN(nn.Module):
         x = F.relu(self.conv1(x))
         x = F.max_pool2d(x, 2)
         x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
         x = F.adaptive_avg_pool2d(x, (8, 8))
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))

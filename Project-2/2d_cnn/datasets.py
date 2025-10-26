@@ -63,7 +63,7 @@ class FrameVideoDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         video_path = self.video_paths[idx]
-        video_name = video_path.split('\\')[-1].split('.avi')[0]
+        video_name = os.path.basename(video_path).split('.avi')[0]
         video_meta = self._get_meta('video_name', video_name)
         label = int(video_meta['label'].iloc[0])
 
