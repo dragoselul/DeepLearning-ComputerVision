@@ -27,7 +27,7 @@ class FrameImageDataset(torch.utils.data.Dataset):
         video_name = os.path.basename(os.path.dirname(frame_path)) #otherwise does not work :(
         video_meta = self._get_meta('video_name', video_name)
 
-        label = video_meta['label'].item()
+        label = int(video_meta['label'].iloc[0])
         
         frame = Image.open(frame_path).convert("RGB")
 
@@ -63,9 +63,9 @@ class FrameVideoDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         video_path = self.video_paths[idx]
-        video_name = video_path.split('/')[-1].split('.avi')[0]
+        video_name = video_path.split('\\')[-1].split('.avi')[0]
         video_meta = self._get_meta('video_name', video_name)
-        label = video_meta['label'].item()
+        label = int(video_meta['label'].iloc[0])
 
         video_frames_dir = self.video_paths[idx].split('.avi')[0].replace('videos', 'frames')
         video_frames = self.load_frames(video_frames_dir)
