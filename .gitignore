@@ -1,3 +1,5 @@
 ucf101/
 *.zip
-*.pyc
+ucf101_*
+Project-2/ucf10
+__pycache__
