@@ -140,6 +140,6 @@ if __name__ == "__main__":
     })
 
     #save to csv
-    metrics_path = f"{work_dir}/metrics/metrics_2cnn_aggreg_pf.csv".replace("\\", "/")
+    metrics_path = f"{work_dir}/metrics/metrics_2cnn_early_fusion_pf.csv".replace("\\", "/")
     metrics_df.to_csv(metrics_path, index=False)
     print(f"Metrics saved to {metrics_path}")
