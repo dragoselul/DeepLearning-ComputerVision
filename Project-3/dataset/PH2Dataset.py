@@ -1,0 +1,1 @@
+# Data loader for skin lesion segmentation dataset PH2

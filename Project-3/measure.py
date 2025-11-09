@@ -1,0 +1,2 @@
+# Load the predicted segmentation masks, and evaluate the performance metrics (accuracy, etc.)
+# performance metrics to use: : Dice overlap, Intersection overnion, Accuracy, Sensitivity, and Specificity
