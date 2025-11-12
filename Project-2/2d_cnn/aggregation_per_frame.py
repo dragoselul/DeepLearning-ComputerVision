@@ -12,10 +12,10 @@ import os
 #config 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-root_dir = r"C:/Users/Elio/Documents/ecole/S9/ComputerVision/project2/ufc101/ufc10"
-
-batch_size = 64
-epochs = 10
+root_dir = "/home/dragoselul/git/DeepLearning-ComputerVision/Project-2/ucf101_noleakage"
+work_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+batch_size = 512
+epochs = 50
 num_classes = 10
 lr = 1e-3 
 save_path = "C:/Users/Elio/Documents/ecole/S9/ComputerVision/project2/models/resnet18_frame_baseline.pth"
@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # Save best model
         if val_acc > best_acc:
             best_acc = val_acc
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            torch.save(model.state_dict(), save_path)
+            # os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            # torch.save(model.state_dict(), save_path)
             print(f"Saved best model (val acc: {val_acc:.3f})")
 
     print("Training finished.")
@@ -119,6 +119,6 @@ if __name__ == "__main__":
     })
 
     #save to csv
-    metrics_path = "C:/Users/Elio/Documents/ecole/S9/ComputerVision/project2/metrics/metrics_2cnn_aggreg_pf.csv"
+    metrics_path = f"{work_dir}/metrics/metrics_2cnn_aggreg_pf_noleakage.csv"
     metrics_df.to_csv(metrics_path, index=False)
     print(f"Metrics saved to {metrics_path}")
