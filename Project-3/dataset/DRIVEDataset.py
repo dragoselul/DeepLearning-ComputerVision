@@ -24,8 +24,6 @@ class DRIVE(torch.utils.data.Dataset):
         image_glob = os.path.join(data_path, 'images', IMAGE_EXT)
         self.image_paths = sorted(glob.glob(image_glob))
 
-        # --- Mask Paths ---
-        # Adjust extension if your masks are not .gif
         MASK_EXT = '*.gif'
         if split=="train":
             # Training masks are in '1st_manual'
@@ -48,7 +46,6 @@ class DRIVE(torch.utils.data.Dataset):
 
         if len(self.image_paths) == 0:
             raise FileNotFoundError(f"No images found! Check DATA_PATH and file extension. Expected glob: {image_glob}")
-
         if len(self.image_paths) != len(self.label_paths):
             print(
                 f"Warning: Count mismatch in {split_dir} set: Images={len(self.image_paths)}, Masks={len(self.label_paths)}")
