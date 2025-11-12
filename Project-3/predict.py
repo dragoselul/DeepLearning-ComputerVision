@@ -3,8 +3,11 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 import torch
+import dataset as ds
 from models.EncDecModel import EncDec
 from models.UNetModel import UNet
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
 
 def save_mask(array, path):
     """
@@ -91,7 +94,7 @@ def predict_batch(model, images, device, threshold=0.5):
 
 
 def predict_and_save(model_path, test_loader, output_dir, model_type='encdec',
-                     device='cuda', threshold=0.5, filenames=None):
+                     device='cuda', threshold=0.5):
     """
     Generate predictions for all test images and save them.
 
@@ -102,49 +105,39 @@ def predict_and_save(model_path, test_loader, output_dir, model_type='encdec',
         model_type: Type of model architecture
         device: Device for inference
         threshold: Binary threshold
-        filenames: Optional list of filenames for saving (if not provided, uses indices)
     """
-    # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
-    # Load the model
     print(f"Loading model from {model_path}...")
     model = load_model(model_path, model_type, device)
 
-    # Generate predictions
     print(f"Generating predictions...")
     print(f"Saving predictions to {output_dir}")
 
+    # Get image paths from dataset
+    dataset = test_loader.dataset
+    image_paths = dataset.image_paths
+
     image_idx = 0
     for batch_idx, batch in enumerate(tqdm(test_loader, desc="Processing batches")):
-        # Handle both (images, masks) and (images,) formats
         if isinstance(batch, (list, tuple)):
             images = batch[0]
         else:
             images = batch
 
-        # Generate predictions
         predictions = predict_batch(model, images, device, threshold)
 
-        # Save each prediction in the batch
         for i in range(predictions.shape[0]):
-            # Get 2D mask (remove channel dimension if present)
-            if predictions.ndim == 4:  # (batch, channel, height, width)
+            if predictions.ndim == 4:
                 mask = predictions[i, 0, :, :]
-            else:  # (batch, height, width)
+            else:
                 mask = predictions[i, :, :]
 
-            # Generate filename
-            if filenames and image_idx < len(filenames):
-                filename = filenames[image_idx]
-            else:
-                filename = f"prediction_{image_idx:04d}.png"
+            # Get original filename from image path
+            original_filename = os.path.basename(image_paths[image_idx])
+            # Change extension to .png
+            filename = os.path.splitext(original_filename)[0] + '.png'
 
-            # Ensure filename has extension
-            if not filename.endswith(('.png', '.jpg', '.tif')):
-                filename += '.png'
-
-            # Save the mask
             output_path = os.path.join(output_dir, filename)
             save_mask(mask, output_path)
 
@@ -153,3 +146,13 @@ def predict_and_save(model_path, test_loader, output_dir, model_type='encdec',
     print(f"Saved {image_idx} predictions to {output_dir}")
 
 
+if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(script_dir, 'drive_encdec_model.pth')
+    output_dir = os.path.join(script_dir, 'predictions/DRIVE')
+    size = 128
+    test_transform = transforms.Compose([transforms.Resize((size, size)),
+                                         transforms.ToTensor()])
+    testset = ds.DRIVE(split="test", transform=test_transform)
+    test_loader = DataLoader(testset, batch_size=1, shuffle=False)
+    predict_and_save(model_path, test_loader, output_dir, model_type='encdec', device='cuda', threshold=0.5)

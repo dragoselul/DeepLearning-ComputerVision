@@ -7,7 +7,8 @@ from typing import Callable, List, Tuple, Union
 from torch.utils.data import Dataset, DataLoader
 
 # --- Configuration ---
-DATA_PATH = '/home/chiara/dtu/deep_learning/group_repo/DeepLearning-ComputerVision/Project-3/dataset/PH2_Dataset_images' 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(script_dir, 'PH2_Dataset_images')
 
 # Split Ratios
 TRAIN_RATIO = 0.70

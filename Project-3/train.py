@@ -1,9 +1,3 @@
-import os
-import numpy as np
-import glob
-import PIL.Image as Image
-
-# pip install torchsummary
 import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -11,9 +5,9 @@ from torchvision import models
 from torchsummary import summary
 import torch.optim as optim
 from time import time
-from models.EncDecModel import EncDec
-from models.UNetModel import UNet
+import models as mod
 from losses import BCELoss, DiceLoss, FocalLoss, BCELossTotalVariation
+import dataset as ds
 
 # Dataset
 size = 128
@@ -22,13 +16,13 @@ train_transform = transforms.Compose([transforms.Resize((size, size)),
 test_transform = transforms.Compose([transforms.Resize((size, size)),
                                     transforms.ToTensor()])
 
-batch_size = 6
-epochs = 20
+batch_size = 48
+epochs = 40
 
-trainset = PhC(train=True, transform=train_transform)
+trainset = ds.DRIVE(split="train", transform=train_transform)
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
                           num_workers=3)
-testset = PhC(train=False, transform=test_transform)
+testset = ds.DRIVE(split="test", transform=test_transform)
 test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False,
                           num_workers=3)
 # IMPORTANT NOTE: There is no validation set provided here, but don't forget to
@@ -39,8 +33,8 @@ print(f"Loaded {len(testset)} test images")
 
 # Training setup
 device = "cuda" if torch.cuda.is_available() else "cpu"
-# model = EncDec().to(device)
-model = UNet().to(device)
+# model = mod.EncDec().to(device)
+model = mod.UNet().to(device)
 #model = UNet2().to(device) # TODO
 #model = DilatedNet().to(device) # TODO
 #summary(model, (3, 256, 256))
@@ -52,7 +46,7 @@ loss_fn = BCELoss()
 # loss_fn = BCELossTotalVariation()
 
 learning_rate = 0.001
-opt = optim.Adam(model.parameters(), learning_rate)
+opt = optim.AdamW(model.parameters(), learning_rate)
 
 # Training loop
 X_test, Y_test = next(iter(test_loader))
@@ -87,5 +81,5 @@ for epoch in range(epochs):
     print(f' - loss: {avg_loss}')
 
 # Save the model
-torch.save(model, 'phc_unet_model.pth')
+torch.save(model, 'drive_unet_model.pth')
 print("Training has finished!")
