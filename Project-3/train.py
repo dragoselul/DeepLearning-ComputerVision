@@ -5,9 +5,6 @@ import PIL.Image as Image
 
 # pip install torchsummary
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.datasets as datasets
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from torchvision import models
@@ -16,7 +13,7 @@ import torch.optim as optim
 from time import time
 from models.EncDecModel import EncDec
 from models.UNetModel import UNet
-from losses import BCELoss, DiceLoss, FocalLoss, BCELoss_TotalVariation
+from losses import BCELoss, DiceLoss, FocalLoss, BCELossTotalVariation
 
 # Dataset
 size = 128
@@ -26,6 +23,8 @@ test_transform = transforms.Compose([transforms.Resize((size, size)),
                                     transforms.ToTensor()])
 
 batch_size = 6
+epochs = 20
+
 trainset = PhC(train=True, transform=train_transform)
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
                           num_workers=3)
@@ -39,20 +38,21 @@ print(f"Loaded {len(trainset)} training images")
 print(f"Loaded {len(testset)} test images")
 
 # Training setup
-device = ...
-model = EncDec().to(device)
-#model = UNet().to(device) # TODO
+device = "cuda" if torch.cuda.is_available() else "cpu"
+# model = EncDec().to(device)
+model = UNet().to(device)
 #model = UNet2().to(device) # TODO
 #model = DilatedNet().to(device) # TODO
 #summary(model, (3, 256, 256))
-learning_rate = 0.001
-opt = optim.Adam(model.parameters(), learning_rate)
+
 
 loss_fn = BCELoss()
-#loss_fn = DiceLoss() # TODO
-#loss_fn = FocalLoss() # TODO
-#loss_fn = BCELoss_TotalVariation() # TODO
-epochs = 20
+# loss_fn = DiceLoss()
+# loss_fn = FocalLoss()
+# loss_fn = BCELossTotalVariation()
+
+learning_rate = 0.001
+opt = optim.Adam(model.parameters(), learning_rate)
 
 # Training loop
 X_test, Y_test = next(iter(test_loader))
@@ -87,5 +87,5 @@ for epoch in range(epochs):
     print(f' - loss: {avg_loss}')
 
 # Save the model
-torch.save(model, ....)
+torch.save(model, 'phc_unet_model.pth')
 print("Training has finished!")
