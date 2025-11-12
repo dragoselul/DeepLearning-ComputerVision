@@ -59,22 +59,27 @@ def evaluate(model, loader, criterion):
 
 
 class EarlyFusion3DCNN(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes=10, dropout_p=0.5):
         super().__init__()
         # For 3D CNN, we keep channels=3 and use temporal dimension for frames
         self.conv1 = nn.Conv3d(3, 64, kernel_size=(3,3,3), padding=1)
         self.conv2 = nn.Conv3d(64, 128, kernel_size=(3,3,3), padding=1)
+        self.dropout_conv = nn.Dropout3d(p=0.3)  # Dropout for conv layers
         self.fc1 = nn.Linear(128 * 2 * 7 * 7, 256)
+        self.dropout_fc = nn.Dropout(p=dropout_p)  # Dropout for FC layers
         self.fc2 = nn.Linear(256, num_classes)
 
     def forward(self, x):  # x: [B, 3, D, H, W] where D is num_frames
         x = F.relu(self.conv1(x))
         x = F.max_pool3d(x, (2, 2, 2))  # pool spatially and temporally
+        x = self.dropout_conv(x)  # Dropout after first conv block
         x = F.relu(self.conv2(x))
         x = F.max_pool3d(x, (2, 2, 2))
+        x = self.dropout_conv(x)  # Dropout after second conv block
         x = F.adaptive_avg_pool3d(x, (2, 7, 7))
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
+        x = self.dropout_fc(x)  # Dropout after first FC layer
         return self.fc2(x)
 
 if __name__ == "__main__":

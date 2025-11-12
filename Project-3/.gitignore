@@ -1,0 +1,6 @@
+dataset/DRIVE/*
+dataset/PH2_Dataset_images/*
+*.tar.gz
+*.md
+*.png
+*.pth
