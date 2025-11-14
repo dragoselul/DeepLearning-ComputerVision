@@ -3,12 +3,29 @@ import numpy as np
 import glob
 from PIL import Image
 import argparse
+import json
 
 
-def load_mask(path):
-    mask = np.array(Image.open(path).convert('L'))
+def load_mask(path, size=None):
+    mask_img = Image.open(path).convert('L') # Use a new variable name for clarity
+
+    if size is not None:
+        if isinstance(size, tuple) and len(size) == 2:
+            h, w = size  # height, width (from the pred_mask.shape)
+            mask_size = (w, h)  # convert to (width, height) for PIL
+
+            # 2. Perform the resize while it is still a PIL Image object
+            mask_img = mask_img.resize(mask_size, Image.NEAREST)
+        else:
+            raise ValueError("size must be a tuple of 2 integers (height, width)")
+
+    # 3. Convert the resized PIL Image object to a NumPy array
+    mask = np.array(mask_img)
+    
+    # 4. Final processing (thresholding)
     mask = (mask > 127).astype(np.uint8)
     return mask
+    
 
 
 def dice_coefficient(pred, gt):
@@ -58,7 +75,20 @@ def evaluate_all_metrics(pred, gt):
     }
 
 
-def evaluate_dataset(pred_dir, gt_dir, pred_pattern='*.png', gt_pattern='*.png'):
+
+def evaluate_dataset(pred_dir, gt_files, dataset_name, model_name, pred_pattern='*.png'):
+    """
+    Evaluate predictions against a list of ground-truth masks, match by shared prefix,
+    and save results to metrics/model_name/dataset_name/results.json
+
+    Args:
+        pred_dir (str): Directory containing predicted masks.
+        gt_files (list of str): List of full paths to ground-truth masks.
+        dataset_name (str): Name of the dataset (used for saving results).
+        model_name (str): Name of the model (used for saving results).
+        pred_pattern (str): Glob pattern to match prediction files.
+    """
+
     pred_files = sorted(glob.glob(os.path.join(pred_dir, pred_pattern)))
 
     if len(pred_files) == 0:
@@ -69,26 +99,44 @@ def evaluate_dataset(pred_dir, gt_dir, pred_pattern='*.png', gt_pattern='*.png')
 
     print(f"Evaluating {len(pred_files)} predictions...")
 
-    for pred_path in pred_files:
-        filename = os.path.basename(pred_path)
-        gt_path = os.path.join(gt_dir, filename)
+    # Create GT dictionary for matching based on prefix
+    gt_dict = {}
+    for p in gt_files:
+        base = os.path.basename(p)
+        name, _ = os.path.splitext(base)
+        # Remove common suffixes like _mask or _lesion
+        if name.endswith('_mask'):
+            name = name[:-5]
+        elif name.endswith('_lesion'):
+            name = name[:-7]
+        gt_dict[name] = p
 
-        if not os.path.exists(gt_path):
-            print(f"Warning: Ground truth not found for {filename}, skipping...")
+    for pred_path in pred_files:
+        pred_name = os.path.basename(pred_path)
+        pred_base, _ = os.path.splitext(pred_name)
+
+        if pred_base not in gt_dict:
+            print(f"Warning: No ground-truth found matching prediction {pred_name}, skipping...")
             continue
 
+        gt_path = gt_dict[pred_base]
+
         pred_mask = load_mask(pred_path)
-        gt_mask = load_mask(gt_path)
+        gt_mask = load_mask(gt_path, size=(128, 128))
         metrics = evaluate_all_metrics(pred_mask, gt_mask)
         all_metrics.append(metrics)
-        per_image_metrics[filename] = metrics
+        per_image_metrics[pred_name] = metrics
 
-        print(f"{filename}: Dice={metrics['dice']:.4f}, IoU={metrics['iou']:.4f}, "
+        print(f"{pred_name}: Dice={metrics['dice']:.4f}, IoU={metrics['iou']:.4f}, "
               f"Acc={metrics['accuracy']:.4f}, Sens={metrics['sensitivity']:.4f}, "
               f"Spec={metrics['specificity']:.4f}")
 
-    avg_metrics = {k: np.mean([m[k] for m in all_metrics]) for k in all_metrics[0].keys()}
-    std_metrics = {k: np.std([m[k] for m in all_metrics]) for k in all_metrics[0].keys()}
+    if not all_metrics:
+        raise ValueError("No valid predictions matched ground-truth masks.")
+
+    # Compute average and std metrics
+    avg_metrics = {k: float(np.mean([m[k] for m in all_metrics])) for k in all_metrics[0].keys()}
+    std_metrics = {k: float(np.std([m[k] for m in all_metrics])) for k in all_metrics[0].keys()}
 
     print("\n" + "="*60)
     print("AVERAGE METRICS:")
@@ -97,9 +145,21 @@ def evaluate_dataset(pred_dir, gt_dir, pred_pattern='*.png', gt_pattern='*.png')
         print(f"{metric_name.capitalize():15s}: {avg_metrics[metric_name]:.4f} ± {std_metrics[metric_name]:.4f}")
     print("="*60)
 
-    return {
+    results = {
         'average': avg_metrics,
         'std': std_metrics,
         'per_image': per_image_metrics,
         'num_images': len(all_metrics)
     }
+
+    # --- Save results to metrics/model_name/dataset_name/results.json ---
+    metrics_dir = os.path.join("metrics", model_name, dataset_name)
+    os.makedirs(metrics_dir, exist_ok=True)
+    results_file = os.path.join(metrics_dir, "results.json")
+
+    with open(results_file, 'w') as f:
+        json.dump(results, f, indent=4)
+
+    print(f"\nResults saved to {results_file}")
+
+    return results
