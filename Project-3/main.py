@@ -32,37 +32,46 @@ datasets = {
     'ph2': (trainset_ph2, testset_ph2)
 }
 
-# TRAINING SETUP
-device = "cuda" if torch.cuda.is_available() else "cpu"
+models = {
+    'encdec': mod.EncDec,
+    'unet': mod.UNet
+}
 
-model = mod.EncDec().to(device)
-#model = mod.UNet().to(device)
+# TRAINING SETUP
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 loss_fn = BCELoss()
 learning_rate = 0.001
-epochs = 4
-
-opt = optim.AdamW(model.parameters(), learning_rate)
-
-for dataset_name, (trainset, testset) in datasets.items():
-
-    train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
-                              num_workers=3)
-    test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False,
-                             num_workers=3)
-    
-    # START TRAINING
-    trained_model = train(model, train_loader, loss_fn, opt, device, save_name='drive_unet_model.pth', epochs=epochs)
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    trained_model_path = os.path.join(script_dir, trained_model)
-    predictions_output_dir = os.path.join(script_dir, 'predictions/DRIVE')
+epochs = 20
 
 
-    # PREDICT ON TEST SET
-    predict_and_save(trained_model_path, test_loader, predictions_output_dir, model_type='unet', device=device, threshold=0.5)
+# ITERATE OVER MODELS AND DATASETS
 
-    gt_files = testset.label_paths
+for model_name, model_class in models.items():
+    print(f"Model: {model_name}")
+    model = model_class().to(device)
+    opt = optim.AdamW(model.parameters(), learning_rate)
 
-    # EVALUATE PREDICTIONS
-    evaluate_dataset(predictions_output_dir, gt_files, dataset_name=dataset_name, model_name='encdec', pred_pattern='*.png')
+    for dataset_name, (trainset, testset) in datasets.items():
+
+        train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
+                                num_workers=3)
+        test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False,
+                                num_workers=3)
+        
+        # START TRAINING
+        trained_model = train(model, train_loader, loss_fn, opt, device, save_name=f'{dataset_name}_{model_name}_model.pth', epochs=epochs)
+
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        trained_model_path = os.path.join(script_dir, trained_model)
+        predictions_output_dir = os.path.join(script_dir, f'predictions/{dataset_name}_{model_name}')
+
+
+        # PREDICT ON TEST SET
+        predict_and_save(trained_model_path, test_loader, predictions_output_dir, model_type=f'{model_name}', device=device, threshold=0.5)
+
+        gt_files = testset.label_paths
+
+        # EVALUATE PREDICTIONS
+        evaluate_dataset(predictions_output_dir, gt_files, dataset_name=dataset_name, model_name=f'{model_name}', pred_pattern='*.png')
 
