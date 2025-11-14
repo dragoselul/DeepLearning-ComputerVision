@@ -1,85 +1,39 @@
 import torch
-from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
-from torchvision import models
-from torchsummary import summary
-import torch.optim as optim
-from time import time
-import models as mod
-from losses import BCELoss, DiceLoss, FocalLoss, BCELossTotalVariation
-import dataset as ds
-
-# Dataset
-size = 128
-train_transform = transforms.Compose([transforms.Resize((size, size)),
-                                    transforms.ToTensor()])
-test_transform = transforms.Compose([transforms.Resize((size, size)),
-                                    transforms.ToTensor()])
-
-batch_size = 48
-epochs = 40
-
-trainset = ds.DRIVE(split="train", transform=train_transform)
-train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
-                          num_workers=3)
-testset = ds.DRIVE(split="test", transform=test_transform)
-test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False,
-                          num_workers=3)
-# IMPORTANT NOTE: There is no validation set provided here, but don't forget to
-# have one for the project
-
-print(f"Loaded {len(trainset)} training images")
-print(f"Loaded {len(testset)} test images")
-
-# Training setup
-device = "cuda" if torch.cuda.is_available() else "cpu"
-# model = mod.EncDec().to(device)
-model = mod.UNet().to(device)
-#model = UNet2().to(device) # TODO
-#model = DilatedNet().to(device) # TODO
-#summary(model, (3, 256, 256))
 
 
-loss_fn = BCELoss()
-# loss_fn = DiceLoss()
-# loss_fn = FocalLoss()
-# loss_fn = BCELossTotalVariation()
+def train(model, train_loader, loss_fn, opt, device, save_name, epochs=20):
+    # Training loop
+  
+    model.train()  # train mode
+    for epoch in range(epochs):
+        print(f'* Epoch {epoch+1}/{epochs}')
 
-learning_rate = 0.001
-opt = optim.AdamW(model.parameters(), learning_rate)
+        avg_loss = 0
+        for X_batch, y_true in train_loader:
+            X_batch = X_batch.to(device)
+            y_true = y_true.to(device)
 
-# Training loop
-X_test, Y_test = next(iter(test_loader))
-model.train()  # train mode
-for epoch in range(epochs):
-    tic = time()
-    print(f'* Epoch {epoch+1}/{epochs}')
+            # set parameter gradients to zero
+            opt.zero_grad()
 
-    avg_loss = 0
-    for X_batch, y_true in train_loader:
-        X_batch = X_batch.to(device)
-        y_true = y_true.to(device)
+            # forward
+            y_pred = model(X_batch)
+            # IMPORTANT NOTE: Check whether y_pred is normalized or unnormalized
+            # and whether it makes sense to apply sigmoid or softmax.
+            loss = loss_fn(y_pred, y_true)  # forward-pass
+            loss.backward()  # backward-pass
+            opt.step()  # update weights
 
-        # set parameter gradients to zero
-        opt.zero_grad()
+            # calculate metrics to show the user
+            avg_loss += loss / len(train_loader)
 
-        # forward
-        y_pred = model(X_batch)
-        # IMPORTANT NOTE: Check whether y_pred is normalized or unnormalized
-        # and whether it makes sense to apply sigmoid or softmax.
-        loss = loss_fn(y_pred, y_true)  # forward-pass
-        loss.backward()  # backward-pass
-        opt.step()  # update weights
+        # IMPORTANT NOTE: It is a good practice to check performance on a
+        # validation set after each epoch.
+        #model.eval()  # testing mode
+        #Y_hat = F.sigmoid(model(X_test.to(device))).detach().cpu()
+        print(f' - loss: {avg_loss}')
 
-        # calculate metrics to show the user
-        avg_loss += loss / len(train_loader)
-
-    # IMPORTANT NOTE: It is a good practice to check performance on a
-    # validation set after each epoch.
-    #model.eval()  # testing mode
-    #Y_hat = F.sigmoid(model(X_test.to(device))).detach().cpu()
-    print(f' - loss: {avg_loss}')
-
-# Save the model
-torch.save(model, 'drive_unet_model.pth')
-print("Training has finished!")
+    # Save the model
+    torch.save(model, save_name)
+    print("Training has finished!")
+    return save_name

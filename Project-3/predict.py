@@ -51,7 +51,7 @@ def load_model(model_path, model_type='encdec', device='cuda'):
             else:
                 raise ValueError(f"Unknown model type: {model_type}")
 
-            model.load_state_dict(torch.load(model_path, map_location=device))
+            model = torch.load(model_path, map_location=device, weights_only=False)
             print(f"Loaded model weights from {model_path}")
     else:
         raise FileNotFoundError(f"Model file not found: {model_path}")
@@ -146,13 +146,3 @@ def predict_and_save(model_path, test_loader, output_dir, model_type='encdec',
     print(f"Saved {image_idx} predictions to {output_dir}")
 
 
-if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(script_dir, 'drive_encdec_model.pth')
-    output_dir = os.path.join(script_dir, 'predictions/DRIVE')
-    size = 128
-    test_transform = transforms.Compose([transforms.Resize((size, size)),
-                                         transforms.ToTensor()])
-    testset = ds.DRIVE(split="test", transform=test_transform)
-    test_loader = DataLoader(testset, batch_size=1, shuffle=False)
-    predict_and_save(model_path, test_loader, output_dir, model_type='encdec', device='cuda', threshold=0.5)
