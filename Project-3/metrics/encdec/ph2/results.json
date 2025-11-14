@@ -1,0 +1,229 @@
+{
+    "average": {
+        "dice": 0.0,
+        "iou": 0.0,
+        "accuracy": 0.7135274251302083,
+        "sensitivity": 0.0,
+        "specificity": 0.9999999999989572
+    },
+    "std": {
+        "dice": 0.0,
+        "iou": 0.0,
+        "accuracy": 0.21523103121956158,
+        "sensitivity": 0.0,
+        "specificity": 7.066061383313516e-13
+    },
+    "per_image": {
+        "IMD010.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.889892578125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993141
+        },
+        "IMD013.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.79791259765625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992351
+        },
+        "IMD014.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.5770263671875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999989422
+        },
+        "IMD031.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.3111572265625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999980385
+        },
+        "IMD032.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.5238037109375,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999988347
+        },
+        "IMD036.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.5810546875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999989495
+        },
+        "IMD038.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.89471435546875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993178
+        },
+        "IMD045.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.90936279296875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993288
+        },
+        "IMD085.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.7825927734375,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992201
+        },
+        "IMD101.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.43048095703125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999985821
+        },
+        "IMD103.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.90777587890625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993275
+        },
+        "IMD105.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.902587890625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993238
+        },
+        "IMD108.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.86102294921875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992911
+        },
+        "IMD120.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.64794921875,
+            "sensitivity": 0.0,
+            "specificity": 0.999999999999058
+        },
+        "IMD138.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.7572021484375,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999991939
+        },
+        "IMD204.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.95782470703125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993627
+        },
+        "IMD206.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.9058837890625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999993262
+        },
+        "IMD226.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.7305908203125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999991646
+        },
+        "IMD312.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.8194580078125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992552
+        },
+        "IMD365.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.86773681640625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992966
+        },
+        "IMD370.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.70745849609375,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999991372
+        },
+        "IMD380.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.84588623046875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992784
+        },
+        "IMD383.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.89898681640625,
+            "sensitivity": 0.0,
+            "specificity": 0.999999999999321
+        },
+        "IMD394.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.79083251953125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992282
+        },
+        "IMD397.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.65087890625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999990622
+        },
+        "IMD405.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.83612060546875,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992699
+        },
+        "IMD425.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.15216064453125,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999959888
+        },
+        "IMD426.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.4263916015625,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999985686
+        },
+        "IMD429.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.8197021484375,
+            "sensitivity": 0.0,
+            "specificity": 0.9999999999992554
+        },
+        "IMD435.png": {
+            "dice": 0.0,
+            "iou": 0.0,
+            "accuracy": 0.22137451171875,
+            "sensitivity": 0.0,
+            "specificity": 0.999999999997243
+        }
+    },
+    "num_images": 30
+}
