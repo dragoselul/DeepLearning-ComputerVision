@@ -49,10 +49,11 @@ epochs = 20
 
 for model_name, model_class in models.items():
     print(f"Model: {model_name}")
-    model = model_class().to(device)
-    opt = optim.AdamW(model.parameters(), learning_rate)
-
+    
     for dataset_name, (trainset, testset) in datasets.items():
+
+        model = model_class().to(device)
+        opt = optim.AdamW(model.parameters(), learning_rate)
 
         train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True,
                                 num_workers=3)
