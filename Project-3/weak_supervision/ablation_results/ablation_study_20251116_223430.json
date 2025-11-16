@@ -1,0 +1,122 @@
+[
+  {
+    "num_positive": 1,
+    "num_negative": 1,
+    "total_clicks": 2,
+    "strategy": "centroid",
+    "test_dice": 0.7012612819671631,
+    "test_iou": 0.5522255301475525,
+    "test_accuracy": 0.8395034790039062,
+    "test_sensitivity": 0.7786436482556792,
+    "test_specificity": 0.8775505288981633,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos1_neg1_centroid.pth"
+  },
+  {
+    "num_positive": 3,
+    "num_negative": 3,
+    "total_clicks": 6,
+    "strategy": "mixed",
+    "test_dice": 0.8314672112464905,
+    "test_iou": 0.7303387522697449,
+    "test_accuracy": 0.8882319132486979,
+    "test_sensitivity": 0.9111321428349176,
+    "test_specificity": 0.8874380883585283,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos3_neg3_mixed.pth"
+  },
+  {
+    "num_positive": 5,
+    "num_negative": 5,
+    "total_clicks": 10,
+    "strategy": "mixed",
+    "test_dice": 0.7300056219100952,
+    "test_iou": 0.6016018986701965,
+    "test_accuracy": 0.8249659220377604,
+    "test_sensitivity": 0.8979055039590434,
+    "test_specificity": 0.7939615194625513,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos5_neg5_mixed.pth"
+  },
+  {
+    "num_positive": 10,
+    "num_negative": 10,
+    "total_clicks": 20,
+    "strategy": "mixed",
+    "test_dice": 0.7960458397865295,
+    "test_iou": 0.6837093234062195,
+    "test_accuracy": 0.8697652180989583,
+    "test_sensitivity": 0.9079354062860338,
+    "test_specificity": 0.8658542450055472,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos10_neg10_mixed.pth"
+  },
+  {
+    "num_positive": 15,
+    "num_negative": 15,
+    "total_clicks": 30,
+    "strategy": "mixed",
+    "test_dice": 0.833594560623169,
+    "test_iou": 0.7350791096687317,
+    "test_accuracy": 0.8859181722005208,
+    "test_sensitivity": 0.8733159124343689,
+    "test_specificity": 0.9191256377713599,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos15_neg15_mixed.pth"
+  },
+  {
+    "num_positive": 20,
+    "num_negative": 20,
+    "total_clicks": 40,
+    "strategy": "mixed",
+    "test_dice": 0.7700003385543823,
+    "test_iou": 0.65496826171875,
+    "test_accuracy": 0.8433085123697917,
+    "test_sensitivity": 0.9024422509479589,
+    "test_specificity": 0.8437306046307277,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_pos20_neg20_mixed.pth"
+  },
+  {
+    "num_positive": 5,
+    "num_negative": 5,
+    "total_clicks": 10,
+    "strategy": "random",
+    "test_dice": 0.768099844455719,
+    "test_iou": 0.6433214545249939,
+    "test_accuracy": 0.8554494222005208,
+    "test_sensitivity": 0.8872821375298583,
+    "test_specificity": 0.8743442050202967,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_5+5_random.pth"
+  },
+  {
+    "num_positive": 5,
+    "num_negative": 5,
+    "total_clicks": 10,
+    "strategy": "centroid",
+    "test_dice": 0.7600720524787903,
+    "test_iou": 0.6262350082397461,
+    "test_accuracy": 0.8639129638671875,
+    "test_sensitivity": 0.790527018665527,
+    "test_specificity": 0.896435549447631,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_5+5_centroid.pth"
+  },
+  {
+    "num_positive": 5,
+    "num_negative": 5,
+    "total_clicks": 10,
+    "strategy": "boundary",
+    "test_dice": 0.7368887066841125,
+    "test_iou": 0.5980936288833618,
+    "test_accuracy": 0.8596674601236979,
+    "test_sensitivity": 0.7494819953338572,
+    "test_specificity": 0.9138145857788683,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_5+5_boundary.pth"
+  },
+  {
+    "num_positive": 5,
+    "num_negative": 5,
+    "total_clicks": 10,
+    "strategy": "mixed",
+    "test_dice": 0.7528708577156067,
+    "test_iou": 0.6304499506950378,
+    "test_accuracy": 0.8741419474283855,
+    "test_sensitivity": 0.7321685902018679,
+    "test_specificity": 0.9575813265065896,
+    "model_path": "/home/dragoselul/git/DeepLearning-ComputerVision/Project-3/weak_supervision/weak_unet_5+5_mixed.pth"
+  }
+]
