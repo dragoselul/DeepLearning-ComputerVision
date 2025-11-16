@@ -43,3 +43,31 @@ class BCELossTotalVariation(nn.Module):
         tv_w = torch.abs(y_pred[:, :, :, 1:] - y_pred[:, :, :, :-1])
         regularization = torch.mean(tv_h) + torch.mean(tv_w)
         return loss + 0.1*regularization
+
+
+class DiceBCELoss(nn.Module):
+    def __init__(self, dice_weight=0.5, bce_weight=0.5, pos_weight=None):
+        super().__init__()
+        self.dice_weight = dice_weight
+        self.bce_weight = bce_weight
+        self.pos_weight = pos_weight
+        self.dice = DiceLoss()
+
+    def forward(self, y_pred, y_true):
+        # Dice loss
+        dice_loss = self.dice(y_pred, y_true)
+
+        # Weighted BCE loss
+        if self.pos_weight is not None:
+            # Apply positive class weighting
+            bce_loss = torch.mean(
+                self.pos_weight * y_true * torch.log(torch.sigmoid(y_pred) + 1e-8) +
+                (1 - y_true) * torch.log(1 - torch.sigmoid(y_pred) + 1e-8)
+            )
+            bce_loss = -bce_loss
+        else:
+            bce_loss = torch.mean(
+                y_pred - y_true * y_pred + torch.log(1 + torch.exp(-y_pred))
+            )
+
+        return self.dice_weight * dice_loss + self.bce_weight * bce_loss

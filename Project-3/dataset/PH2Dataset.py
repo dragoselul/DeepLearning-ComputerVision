@@ -73,10 +73,11 @@ class PH2Dataset(Dataset):
     """
     Dataset class for the PH2 skin lesion dataset, handling internal splits.
     """
-    def __init__(self, split: Union[str, bool], transform: Callable):
+    def __init__(self, split: Union[str, bool], transform: Callable, label_transform=None, augment=False):
         'Initialization'
         self.transform = transform
-        
+        self.label_transform = label_transform
+
         # --- Determine the required split ---
         if isinstance(split, str):
             split_key = split.lower()
@@ -85,6 +86,8 @@ class PH2Dataset(Dataset):
             split_key = 'train' if split else 'test'
         else:
             raise ValueError("The 'split' argument must be a string ('train', 'val', 'test') or a boolean.")
+
+        self.augment = augment and split_key == 'train'  # Only augment training data
 
         if split_key not in _PH2_DATA_SPLITS:
             raise ValueError(f"Invalid split key: {split_key}. Must be 'train', 'val', or 'test'.")
@@ -149,14 +152,47 @@ class PH2Dataset(Dataset):
         label_path = self.label_paths[idx]
 
         image = Image.open(image_path).convert('RGB')
-        label = Image.open(label_path).convert('L') 
-        
-        # Apply the transformations
+        label = Image.open(label_path).convert('L')
+
+        # Apply synchronized augmentation BEFORE transforms
+        if self.augment:
+            import torchvision.transforms.functional as TF
+            import random
+
+            # Random horizontal flip
+            if random.random() > 0.5:
+                image = TF.hflip(image)
+                label = TF.hflip(label)
+
+            # Random vertical flip
+            if random.random() > 0.5:
+                image = TF.vflip(image)
+                label = TF.vflip(label)
+
+            # Random rotation
+            if random.random() > 0.5:
+                angle = random.uniform(-15, 15)
+                image = TF.rotate(image, angle)
+                label = TF.rotate(label, angle)
+
+            # Color jitter (only for image)
+            if random.random() > 0.5:
+                image = TF.adjust_brightness(image, random.uniform(0.8, 1.2))
+                image = TF.adjust_contrast(image, random.uniform(0.8, 1.2))
+
+        # Apply image transform (with normalization)
         X = self.transform(image)
-        Y = self.transform(label)
-        
-        # Ensure mask is treated as a float tensor for consistent processing
-        if Y.max() > 1.0:
-             Y = Y / 255.0
-        
+
+        # Apply label transform (without normalization)
+        if self.label_transform is not None:
+            Y = self.label_transform(label)
+        else:
+            # Default: just resize and convert to tensor
+            import torchvision.transforms.functional as TF
+            Y = TF.resize(label, X.shape[-2:])
+            Y = TF.to_tensor(Y)
+
+        # Binarize label: threshold at 0.5 to get 0/1 binary mask
+        Y = (Y > 0.5).float()
+
         return X, Y

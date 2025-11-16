@@ -4,15 +4,19 @@ import glob
 import torch
 from PIL import Image
 from typing import Callable
+import torchvision.transforms.functional as TF
+import random
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(script_dir, 'DRIVE')
 
 
 class DRIVE(torch.utils.data.Dataset):
-    def __init__(self, transform: Callable, split="train"):
+    def __init__(self, transform: Callable, split="train", label_transform=None, augment=False):
         'Initialization'
         self.transform = transform
+        self.label_transform = label_transform
+        self.augment = augment and split == "train"  # Only augment training data
 
         split_dir = 'training' if split=="train" else 'test'
 
@@ -25,12 +29,11 @@ class DRIVE(torch.utils.data.Dataset):
         self.image_paths = sorted(glob.glob(image_glob))
 
         MASK_EXT = '*.gif'
-        if split=="train":
-            # Training masks are in '1st_manual'
-            label_glob = os.path.join(data_path, 'mask', MASK_EXT)
+        if split == 'train':
+            label_glob = os.path.join(data_path, '1st_manual', MASK_EXT)
         else:
-            # Test masks are in 'mask'
             label_glob = os.path.join(data_path, 'mask', MASK_EXT)
+
 
         self.label_paths = sorted(glob.glob(label_glob))
 
@@ -60,11 +63,43 @@ class DRIVE(torch.utils.data.Dataset):
         label_path = self.label_paths[idx]
 
         image = Image.open(image_path).convert('RGB')
-
         label = Image.open(label_path).convert('L')
 
-        # Apply the transformations
+        # Apply synchronized augmentation BEFORE transforms
+        if self.augment:
+            # Random horizontal flip
+            if random.random() > 0.5:
+                image = TF.hflip(image)
+                label = TF.hflip(label)
+
+            # Random vertical flip
+            if random.random() > 0.5:
+                image = TF.vflip(image)
+                label = TF.vflip(label)
+
+            # Random rotation
+            if random.random() > 0.5:
+                angle = random.uniform(-15, 15)
+                image = TF.rotate(image, angle)
+                label = TF.rotate(label, angle)
+
+            # Color jitter (only for image)
+            if random.random() > 0.5:
+                image = TF.adjust_brightness(image, random.uniform(0.8, 1.2))
+                image = TF.adjust_contrast(image, random.uniform(0.8, 1.2))
+
+        # Apply image transform (with normalization)
         X = self.transform(image)
-        Y = self.transform(label)
+
+        # Apply label transform (without normalization)
+        if self.label_transform is not None:
+            Y = self.label_transform(label)
+        else:
+            # Default: just resize and convert to tensor
+            Y = TF.resize(label, X.shape[-2:])
+            Y = TF.to_tensor(Y)
+
+        # Binarize label: threshold at 0.5 to get 0/1 binary mask
+        Y = (Y > 0.5).float()
 
         return X, Y

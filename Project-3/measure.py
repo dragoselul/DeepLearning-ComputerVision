@@ -15,7 +15,7 @@ def load_mask(path, size=None):
             mask_size = (w, h)  # convert to (width, height) for PIL
 
             # 2. Perform the resize while it is still a PIL Image object
-            mask_img = mask_img.resize(mask_size, Image.NEAREST)
+            mask_img = mask_img.resize(mask_size, Image.Resampling.NEAREST)
         else:
             raise ValueError("size must be a tuple of 2 integers (height, width)")
 
@@ -122,7 +122,8 @@ def evaluate_dataset(pred_dir, gt_files, dataset_name, model_name, pred_pattern=
         gt_path = gt_dict[pred_base]
 
         pred_mask = load_mask(pred_path)
-        gt_mask = load_mask(gt_path, size=(128, 128))
+        # Resize GT to match prediction size
+        gt_mask = load_mask(gt_path, size=pred_mask.shape)
         metrics = evaluate_all_metrics(pred_mask, gt_mask)
         all_metrics.append(metrics)
         per_image_metrics[pred_name] = metrics

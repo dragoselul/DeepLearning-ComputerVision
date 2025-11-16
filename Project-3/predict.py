@@ -51,7 +51,7 @@ def load_model(model_path, model_type='encdec', device='cuda'):
             else:
                 raise ValueError(f"Unknown model type: {model_type}")
 
-            model = torch.load(model_path, map_location=device, weights_only=False)
+            model = torch.load(model_path, map_location=device, weights_only=True)
             print(f"Loaded model weights from {model_path}")
     else:
         raise FileNotFoundError(f"Model file not found: {model_path}")

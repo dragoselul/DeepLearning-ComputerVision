@@ -74,4 +74,4 @@ class UNet(nn.Module):
         dec1 = torch.cat((dec1, enc1), dim=1)
         dec1 = self.decoder1(dec1)
 
-        return torch.sigmoid(self.conv_final(dec1))
+        return self.conv_final(dec1)
