@@ -158,8 +158,9 @@ class POTHOLES(torch.utils.data.Dataset):
                     bbox=bbox,
                 )
             )
-        print(labels)
+            
         image_width, image_height = image.size
+
         # Apply synchronized augmentation BEFORE transforms
         if self.augment:
             # Random horizontal flip
@@ -181,11 +182,11 @@ class POTHOLES(torch.utils.data.Dataset):
                     label.bbox = BBox(xmin, new_ymin, xmax, new_ymax)
 
             # Random rotation
-            if random.random() > 0.5:
-                angle = random.uniform(-15, 15)
-                image = TF.rotate(image, angle)
-                for label in labels:
-                    label.bbox = rotate_bbox(label.bbox, image_width, image_height, angle)
+            #if random.random() > 0.5:
+                #angle = random.uniform(-15, 15)
+                #image = TF.rotate(image, angle)
+                #for label in labels:
+                #    label.bbox = rotate_bbox(label.bbox, image_width, image_height, angle)
 
             # Color jitter (only for image)
             if random.random() > 0.5:
@@ -196,14 +197,14 @@ class POTHOLES(torch.utils.data.Dataset):
         X = self.transform(image)
 
         # Apply label transform (without normalization)
-        if self.label_transform is not None:
-            Y = self.label_transform(label)
-        else:
-            # Default: just resize and convert to tensor
-            Y = TF.resize(label, X.shape[-2:])
-            Y = TF.to_tensor(Y)
-
-        # Binarize label: threshold at 0.5 to get 0/1 binary mask
-        Y = (Y > 0.5).float()
+        target_size = self.transform.transforms[0].size
+        width_scale = target_size[0] / image_width
+        height_scale = target_size[1] / image_height
+        for label in labels:
+            label.bbox.xmin = label.bbox.xmin * width_scale
+            label.bbox.xmax = label.bbox.xmax * width_scale
+            label.bbox.ymin = label.bbox.ymin * height_scale
+            label.bbox.ymax = label.bbox.ymax * height_scale
+        Y = labels
 
         return X, Y
