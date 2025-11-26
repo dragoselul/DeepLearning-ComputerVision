@@ -1,6 +1,7 @@
 import dataset.POTHOLESDataset as ds
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
+import torch
 
 size = (560, 576)
 
