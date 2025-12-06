@@ -1,4 +1,7 @@
-from potholes import BBox
+try:
+    from .potholes import BBox
+except ImportError:
+    from potholes import BBox
 import numpy as np
 import random
 from typing import List 
@@ -64,13 +67,16 @@ def IoU(box_a: BBox, box_b: BBox) -> float:
     box_a_area = (box_a.xmax - box_a.xmin) * (box_a.ymax - box_a.ymin)
     box_b_area = (box_b.xmax - box_b.xmin) * (box_b.ymax - box_b.ymin)
 
-    # compute the intersection over union
-    iou = inter_area / float(box_a_area + box_b_area - inter_area)
+    # compute the intersection over union (handle zero area case)
+    union_area = float(box_a_area + box_b_area - inter_area)
+    if union_area <= 0:
+        return 0.0
+    iou = inter_area / union_area
     return iou
 
 
 def prepare_rcnn_batch(images: List[torch.Tensor], targets: List[List[BBox]],
-                       iou_threshold=0.5, neg_sample_iou_max=0.1, max_proposals_per_image=16):
+                       iou_threshold=0.5, neg_sample_iou_max=0.3, max_proposals_per_image=32):
     """
     Transforms a batch of images and ground truth bounding boxes into R-CNN training format.
     
@@ -94,20 +100,69 @@ def prepare_rcnn_batch(images: List[torch.Tensor], targets: List[List[BBox]],
         proposal_labels = []
         proposal_deltas = []
         
-        # --- A. Positive Proposals (Ground Truth Boxes) ---
+        # --- A. Positive Proposals (Ground Truth Boxes + jittered versions) ---
         for gt_box in gt_bboxes:
+            # Original GT box
             proposals.append((gt_box, label2target['pothole'], encode_bbox(gt_box, gt_box)))
 
-        # --- B. Negative Proposals (Random Background Sampling) ---
-        neg_count = max(0, max_proposals_per_image - len(gt_bboxes))
-        for _ in range(neg_count):
-            # Generate a random box
-            # Ensure min < max and both are within image bounds (W, H)
-            xmin = random.randint(0, W - 10)
-            ymin = random.randint(0, H - 10)
-            xmax = random.randint(xmin + 10, W)
-            ymax = random.randint(ymin + 10, H)
-            
+            # Add jittered versions of GT boxes (data augmentation for positives)
+            for _ in range(2):
+                jitter = 0.1
+                bw = gt_box.xmax - gt_box.xmin
+                bh = gt_box.ymax - gt_box.ymin
+                dx = int(random.uniform(-jitter, jitter) * bw)
+                dy = int(random.uniform(-jitter, jitter) * bh)
+                jittered = BBox(
+                    max(0, gt_box.xmin + dx),
+                    max(0, gt_box.ymin + dy),
+                    min(W, gt_box.xmax + dx),
+                    min(H, gt_box.ymax + dy)
+                )
+                if IoU(jittered, gt_box) > 0.7:
+                    proposals.append((jittered, label2target['pothole'], encode_bbox(jittered, gt_box)))
+
+        # --- B. Hard Negative Proposals (partial overlap with GT) ---
+        hard_neg_count = min(len(gt_bboxes) * 3, max_proposals_per_image // 3)
+        hard_neg_attempts = 0
+        hard_negs_added = 0
+        while hard_negs_added < hard_neg_count and hard_neg_attempts < hard_neg_count * 10:
+            hard_neg_attempts += 1
+            if len(gt_bboxes) == 0:
+                break
+            # Pick a random GT box and create a shifted version
+            gt_box = random.choice(gt_bboxes)
+            bw = gt_box.xmax - gt_box.xmin
+            bh = gt_box.ymax - gt_box.ymin
+            shift_x = int(random.uniform(0.3, 0.7) * bw * random.choice([-1, 1]))
+            shift_y = int(random.uniform(0.3, 0.7) * bh * random.choice([-1, 1]))
+
+            hard_box = BBox(
+                max(0, gt_box.xmin + shift_x),
+                max(0, gt_box.ymin + shift_y),
+                min(W, gt_box.xmax + shift_x),
+                min(H, gt_box.ymax + shift_y)
+            )
+
+            # Check IoU - should be between 0.1 and 0.4 (hard negative range)
+            max_iou = max(IoU(hard_box, gb) for gb in gt_bboxes)
+            if 0.1 < max_iou < 0.4:
+                proposals.append((hard_box, label2target['background'], [0.0] * 4))
+                hard_negs_added += 1
+
+        # --- C. Easy Negative Proposals (Random Background Sampling) ---
+        neg_count = max(0, max_proposals_per_image - len(proposals))
+        neg_attempts = 0
+        while len(proposals) < max_proposals_per_image and neg_attempts < neg_count * 5:
+            neg_attempts += 1
+            # Generate a random box with varying sizes
+            min_size = 30
+            max_size = min(W, H) // 2
+            box_size = random.randint(min_size, max_size)
+            xmin = random.randint(0, max(1, W - box_size))
+            ymin = random.randint(0, max(1, H - box_size))
+            xmax = min(W, xmin + box_size)
+            ymax = min(H, ymin + box_size)
+
             rand_box = BBox(xmin, ymin, xmax, ymax)
             
             # Check for max IoU with all ground truth boxes

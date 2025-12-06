@@ -1,3 +1,6 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 def iou_xyxy(a, b, eps=1e-12):
     #for a (two corner points to make box)
     #Top-left: (ax1, ay1)
@@ -31,7 +34,42 @@ def iou_xyxy(a, b, eps=1e-12):
         return 0.0
     return inter / (union + eps)
 
-import matplotlib.pyplot as plt
+# ===================== NMS Implementation (Task 2) =====================
+def nms(boxes, scores, iou_threshold=0.5):
+    """
+    Non-Maximum Suppression to discard overlapping boxes
+    boxes: list of [x1, y1, x2, y2]
+    scores: list of confidence scores
+    iou_threshold: IoU threshold for suppression
+    Returns: indices of boxes to keep
+    """
+    if len(boxes) == 0:
+        return []
+
+    boxes = np.array(boxes)
+    scores = np.array(scores)
+
+    # Sort by score (descending)
+    order = scores.argsort()[::-1]
+
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+
+        if order.size == 1:
+            break
+
+        # Compute IoU with remaining boxes
+        remaining = order[1:]
+        ious = np.array([iou_xyxy(boxes[i], boxes[j]) for j in remaining])
+
+        # Keep boxes with IoU below threshold
+        mask = ious < iou_threshold
+        order = remaining[mask]
+
+    return keep
+
 
 def plot_pr_curve(points, ap=None, title="Precision–Recall Curve"):
     """
@@ -53,8 +91,7 @@ def plot_pr_curve(points, ap=None, title="Precision–Recall Curve"):
     plt.legend()
     plt.show()
     
-    
-import numpy as np
+
 def compute_ap_from_points(points):
     if not points:
         return 0.0
