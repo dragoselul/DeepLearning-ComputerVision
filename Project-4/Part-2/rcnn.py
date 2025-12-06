@@ -14,7 +14,7 @@ from utils import prepare_rcnn_batch, decode, label2target, visualize_prediction
 
     
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-vgg_backbone = models.vgg16(pretrained=True)
+vgg_backbone = models.vgg16(weights=True)
 vgg_backbone.classifier = nn.Sequential(*list(vgg_backbone.classifier.children())[:-1]) # Removing the final FC layer (25088 -> 4096)
 # Correct feature dim is 4096 after removing the last layer, not 25088 (which is the output of the flatten layer)
 feature_dim = 4096 
@@ -140,10 +140,11 @@ def collate_fn(batch):
     targets = list(targets)
     return images, targets
 
-# Increase batch size to 32 as in the original code
-train_loader = DataLoader(train_ds, batch_size=32, shuffle=True, collate_fn=collate_fn)
-val_loader   = DataLoader(val_ds, batch_size=32, shuffle=False, collate_fn=collate_fn)
-test_loader  = DataLoader(test_ds, batch_size=32, shuffle=False, collate_fn=collate_fn)
+# Reduced batch size to avoid GPU memory overflow (each image generates multiple proposals)
+batch_size = 8
+train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+val_loader   = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+test_loader  = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
 
 
 rcnn = RCNN().to(device)
@@ -162,6 +163,8 @@ for epoch in range(n_epochs):
     # 1. Training Phase
     _n = len(train_loader)
     for ix, (images, targets) in enumerate(train_loader):
+        # Move images to device before preparing the batch
+        images = [img.to(device) for img in images]
         # NEW STEP: Prepare the batch for R-CNN training
         inputs = prepare_rcnn_batch(images, targets)
         
@@ -180,6 +183,8 @@ for epoch in range(n_epochs):
     # 2. Validation Phase
     _n = len(test_loader)
     for ix, (images, targets) in enumerate(test_loader):
+        # Move images to device before preparing the batch
+        images = [img.to(device) for img in images]
         # NEW STEP: Prepare the batch for R-CNN validation
         inputs = prepare_rcnn_batch(images, targets)
         

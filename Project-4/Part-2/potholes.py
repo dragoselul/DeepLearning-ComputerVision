@@ -75,7 +75,7 @@ def unpack_bbox(bbox):
 
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(script_dir, 'potholes')
+DATA_PATH = os.path.join(script_dir, '../potholes')
 
 class POTHOLES(torch.utils.data.Dataset):
     def __init__(self, transform: Callable, split="train", label_transform=None, augment=False):

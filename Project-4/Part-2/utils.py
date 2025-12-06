@@ -38,6 +38,8 @@ def encode_bbox(p_bbox: BBox, g_bbox: BBox) -> List[float]:
     eps = np.finfo(float).eps
     pw = max(pw, eps)
     ph = max(ph, eps)
+    gw = max(gw, eps)
+    gh = max(gh, eps)
 
     t_x = (gx - px) / pw
     t_y = (gy - py) / ph
@@ -94,11 +96,8 @@ def prepare_rcnn_batch(images: List[torch.Tensor], targets: List[List[BBox]],
         
         # --- A. Positive Proposals (Ground Truth Boxes) ---
         for gt_box in gt_bboxes:
-            proposals.append(gt_box)
-            proposal_labels.append(label2target['pothole'])
-            # Delta to transform GT to GT is (0, 0, 0, 0)
-            proposal_deltas.append(encode_bbox(gt_box, gt_box)) 
-            
+            proposals.append((gt_box, label2target['pothole'], encode_bbox(gt_box, gt_box)))
+
         # --- B. Negative Proposals (Random Background Sampling) ---
         neg_count = max(0, max_proposals_per_image - len(gt_bboxes))
         for _ in range(neg_count):
@@ -118,13 +117,13 @@ def prepare_rcnn_batch(images: List[torch.Tensor], targets: List[List[BBox]],
             
             # Only use as a negative sample if IoU is very low
             if max_iou <= neg_sample_iou_max:
-                proposals.append(rand_box)
-                proposal_labels.append(label2target['background']) # Label 0
-                proposal_deltas.append([0.0] * 4) # Deltas don't matter for background
+                proposals.append((rand_box, label2target['background'], [0.0] * 4))
 
-        # 2. Crop and Resize Proposals
+        # 2. Crop and Resize Proposals - only add labels/deltas for valid crops
         batch_crops = []
-        for prop in proposals:
+        batch_labels = []
+        batch_deltas = []
+        for prop, label, delta in proposals:
             # Clamp coordinates to ensure they are within the image boundaries
             x1 = max(0, prop.xmin)
             y1 = max(0, prop.ymin)
@@ -143,12 +142,14 @@ def prepare_rcnn_batch(images: List[torch.Tensor], targets: List[List[BBox]],
                     align_corners=False
                 ).squeeze(0)
                 batch_crops.append(resized_crop)
+                batch_labels.append(label)
+                batch_deltas.append(delta)
 
         # 3. Final Batch Assembly
         if batch_crops:
             all_inputs.append(torch.stack(batch_crops).to(device))
-            all_classes.append(torch.tensor(proposal_labels).long().to(device))
-            all_deltas.append(torch.tensor(proposal_deltas).float().to(device))
+            all_classes.append(torch.tensor(batch_labels).long().to(device))
+            all_deltas.append(torch.tensor(batch_deltas).float().to(device))
 
     # Concatenate all lists into single tensors for the batch
     if not all_inputs:
